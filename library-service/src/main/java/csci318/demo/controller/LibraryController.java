@@ -1,53 +1,60 @@
 package csci318.demo.controller;
 
+import csci318.demo.controller.dto.LibraryDTO;
 import csci318.demo.model.Address;
 import csci318.demo.model.Library;
-import csci318.demo.repository.AddressRepository;
-import csci318.demo.repository.LibraryRepository;
+import csci318.demo.service.LibraryService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class LibraryController {
 
-    private final LibraryRepository libraryRepository;
-    private final AddressRepository addressRepository;
+    private final LibraryService libraryService;
 
-    LibraryController(LibraryRepository libraryRepository, AddressRepository addressRepository) {
-        this.libraryRepository = libraryRepository;
-        this.addressRepository = addressRepository;
+    public LibraryController(LibraryService libraryService) {
+        this.libraryService = libraryService;
     }
 
     @GetMapping("/libraries")
-    List<Library> all() {
-        return libraryRepository.findAll();
+    List<LibraryDTO> all() {
+        return libraryService.getAllLibraries()
+                .stream()
+                .map(library -> {
+                    LibraryDTO libDTO = new LibraryDTO();
+                    libDTO.setLibraryName(library.getName());
+                    Address address =  library.getAddress();
+                    libDTO.setPostcode(address == null ? "" : address.getLocation());
+                    return libDTO;
+                })
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/libraries/{id}")
-    Library findLibraryById(@PathVariable Long id) {
-        return libraryRepository.findById(id)
-                .orElseThrow(RuntimeException::new);
+    LibraryDTO findLibraryById(@PathVariable Long id) {
+        LibraryDTO libDTO = new LibraryDTO();
+        Library library = libraryService.getLibrary(id);
+        Address address =  library.getAddress();
+        libDTO.setPostcode(address == null ? "" : address.getLocation());
+        libDTO.setLibraryName(library.getName());
+        libDTO.setPostcode(library.getAddress().getLocation());
+        return libDTO;
     }
 
     @PostMapping("/libraries")
-    Library createLibrary(@RequestBody Library newLibrary) {
-        return libraryRepository.save(newLibrary);
+    Library createLibrary(@RequestBody LibraryDTO newLibrary) {
+        return libraryService.createLibrary(newLibrary);
     }
 
     @PutMapping("/libraries/{id}")
-    Library updateLibraryName(@PathVariable Long id, @RequestBody Library library) {
-        Library library1 = libraryRepository.findById(id)
-                .orElseThrow(RuntimeException::new);
-        library1.setName(library.getName());
-        return libraryRepository.save(library1);
+    Library updateLibraryName(@PathVariable Long id, @RequestBody LibraryDTO library) {
+        return libraryService.updateLibraryName(id, library);
     }
 
     @PutMapping("/libraries/{id}/address/{addressId}")
     Library updateLibraryAddress(@PathVariable Long id, @PathVariable Long addressId) {
-        Library library = libraryRepository.findById(id).orElseThrow(RuntimeException::new);
-        Address address = addressRepository.findById(addressId).orElseThrow(RuntimeException::new);
-        library.setAddress(address);
-        return libraryRepository.save(library);
+        return libraryService.updateLibraryAddress(id, addressId);
     }
 }

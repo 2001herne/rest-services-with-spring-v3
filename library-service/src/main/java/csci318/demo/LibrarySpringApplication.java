@@ -4,13 +4,20 @@ import csci318.demo.model.Library;
 import csci318.demo.repository.LibraryRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 public class LibrarySpringApplication {
 
 	public static void main(String[] args) {
 		org.springframework.boot.SpringApplication.run(LibrarySpringApplication.class, args);
+	}
+
+	@Bean
+	public RestTemplate restTemplate(RestTemplateBuilder builder) {
+		return builder.build();
 	}
 
 	@Bean
